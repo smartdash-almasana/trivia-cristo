@@ -639,6 +639,32 @@
   }
   .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(255,77,0,0.5); }
   .form-note { color: var(--muted); font-size: 0.78rem; margin-top: 8px; }
+  .form-success {
+    text-align: center;
+    padding: 40px 20px;
+    animation: fadeInUp 0.5s ease;
+  }
+  .form-success h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .form-success p {
+    color: var(--light);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .form-error {
+    background: rgba(255,77,0,0.15);
+    border: 1px solid rgba(255,77,0,0.4);
+    border-radius: 14px;
+    padding: 14px 20px;
+    color: var(--gold);
+    font-size: 0.9rem;
+    margin-top: 8px;
+    text-align: center;
+  }
 
   /* ======= FOOTER ======= */
   footer {
@@ -1032,12 +1058,41 @@
   }, { threshold: 0.12 });
   reveals.forEach(r => observer.observe(r));
 
-  // Form feedback visual mientras envía
-  document.querySelector('form[name="registro-trivia"]').addEventListener('submit', function() {
+  // Form AJAX submission
+  const regForm = document.querySelector('form[name="registro-trivia"]');
+  regForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
     const btn = document.querySelector('.btn-submit');
+    const originalText = btn.textContent;
     btn.textContent = '⏳ Enviando...';
     btn.disabled = true;
     btn.style.opacity = '0.8';
+
+    // Remove previous error if any
+    const oldError = regForm.querySelector('.form-error');
+    if (oldError) oldError.remove();
+
+    try {
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(regForm)).toString(),
+      });
+
+      if (response.ok) {
+        regForm.innerHTML = '<div class="form-success"><h3>🎉 ¡Registro exitoso!</h3><p>Ya estás anotado/a en Veritas Trivia.<br>Te enviaremos novedades y recordatorios a tu correo.</p></div>';
+      } else {
+        throw new Error('Error en el servidor');
+      }
+    } catch (err) {
+      btn.textContent = originalText;
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'form-error';
+      errorDiv.textContent = '⚠️ Hubo un error al enviar. Por favor intentá de nuevo.';
+      regForm.appendChild(errorDiv);
+    }
   });
 </script>
 
